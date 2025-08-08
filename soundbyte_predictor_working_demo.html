@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Soundbyte Sports Schedule Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #000;
+            color: #FFD700;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #FFD700;
+        }
+        nav {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button.menu-btn, select.menu-btn {
+            margin: 5px;
+            padding: 10px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #222;
+            color: #FFD700;
+            border: 1px solid #FFD700;
+            border-radius: 5px;
+        }
+        .week, .team-schedule {
+            margin: 20px auto;
+            max-width: 800px;
+            background: #111;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px #333;
+        }
+        .game {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .game img {
+            cursor: pointer;
+            width: 60px;
+            margin: 0 20px;
+            filter: grayscale(100%);
+            transition: all 0.2s;
+            border-radius: 50%;
+        }
+        .game img:hover {
+            filter: none;
+            transform: scale(1.1);
+        }
+        .game img.selected {
+            filter: none;
+            outline: 3px solid #FFD700;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Soundbyte Sports Schedule Predictor</h1>
+
+    <nav>
+        <button class="menu-btn" onclick="showAllWeeks()">All Weeks</button>
+        <button class="menu-btn" onclick="showTeamMenu()">By Team</button>
+        <select id="team-select" class="menu-btn hidden" onchange="showTeamSchedule(this.value)">
+            <option value="">Select Team</option>
+        </select>
+    </nav>
+
+    <div id="content"></div>
+
+    <script>
+        const teams = [
+            "49ers", "Bears", "Bengals", "Bills", "Broncos", "Browns", "Buccaneers", "Cardinals",
+            "Chargers", "Chiefs", "Colts", "Commanders", "Cowboys", "Dolphins", "Eagles", "Falcons",
+            "Giants", "Jaguars", "Jets", "Lions", "Packers", "Panthers", "Patriots", "Raiders",
+            "Rams", "Ravens", "Saints", "Seahawks", "Steelers", "Texans", "Titans", "Vikings"
+        ];
+
+        const schedule = {
+            "Week 1": [
+                ["Cowboys","Eagles"], ["Chiefs","Chargers"], ["Buccaneers","Falcons"],
+                ["Bengals","Browns"], ["Dolphins","Colts"], ["Panthers","Jaguars"],
+                ["Raiders","Patriots"], ["Cardinals","Saints"], ["Steelers","Jets"],
+                ["Giants","Commanders"], ["Titans","Broncos"], ["49ers","Seahawks"],
+                ["Lions","Packers"], ["Texans","Rams"]
+            ],
+            "Week 2": [
+                ["Commanders","Packers"], ["Browns","Ravens"], ["Jaguars","Bengals"],
+                ["Giants","Cowboys"], ["Bears","Lions"], ["Patriots","Dolphins"],
+                ["49ers","Saints"], ["Bills","Jets"], ["Seahawks","Steelers"],
+                ["Rams","Titans"], ["Panthers","Cardinals"], ["Broncos","Colts"],
+                ["Eagles","Chiefs"], ["Falcons","Vikings"], ["Buccaneers","Texans"]
+            ]
+        };
+
+        const content = document.getElementById('content');
+        const teamSelect = document.getElementById('team-select');
+
+        teams.forEach(team => {
+            const opt = document.createElement('option');
+            opt.value = team;
+            opt.textContent = team;
+            teamSelect.appendChild(opt);
+        });
+
+        function showAllWeeks() {
+            teamSelect.classList.add('hidden');
+            content.innerHTML = '';
+            Object.entries(schedule).forEach(([week, games]) => {
+                const weekDiv = document.createElement('div');
+                weekDiv.className = 'week';
+                weekDiv.innerHTML = `<h2>${week}</h2>`;
+                games.forEach(([t1, t2], idx) => {
+                    weekDiv.innerHTML += `
+                        <div class="game" data-week="${week}" data-game="${idx}">
+                            <img src="https://static.www.nfl.com/t_headshot.png" alt="${t1}">
+                            <img src="https://static.www.nfl.com/t_headshot.png" alt="${t2}">
+                        </div>`;
+                });
+                content.appendChild(weekDiv);
+            });
+        }
+
+        function showTeamMenu() {
+            content.innerHTML = '';
+            teamSelect.classList.remove('hidden');
+        }
+
+        function showTeamSchedule(team) {
+            content.innerHTML = '';
+            const scheduleDiv = document.createElement('div');
+            scheduleDiv.className = 'team-schedule';
+            scheduleDiv.innerHTML = `<h2>${team} Schedule</h2>`;
+            Object.entries(schedule).forEach(([week, games]) => {
+                games.forEach(([t1, t2], idx) => {
+                    if (t1 === team || t2 === team) {
+                        scheduleDiv.innerHTML += `
+                            <div class="game" data-week="${week}" data-game="${idx}">
+                                <img src="https://static.www.nfl.com/t_headshot.png" alt="${t1}">
+                                <img src="https://static.www.nfl.com/t_headshot.png" alt="${t2}">
+                            </div>`;
+                    }
+                });
+            });
+            content.appendChild(scheduleDiv);
+        }
+
+        content.addEventListener('click', e => {
+            if (e.target.tagName === 'IMG') {
+                const game = e.target.closest('.game');
+                const imgs = game.querySelectorAll('img');
+                imgs.forEach(img => img.classList.remove('selected'));
+                e.target.classList.add('selected');
+                const picks = JSON.parse(localStorage.getItem('picks') || '{}');
+                picks[game.dataset.week + '-' + game.dataset.game] = e.target.alt;
+                localStorage.setItem('picks', JSON.stringify(picks));
+            }
+        });
+
+        showAllWeeks(); // default view
+    </script>
+</body>
+</html>
